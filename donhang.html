@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Đơn hàng – Thăng Long 3D</title>
+<style>
+:root{--navy:#0F2347;--orange:#FF6A1F;--orange-d:#E5560F;--soft:#F1F5FB;--line:#DCE4F0;--muted:#566581}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--soft);color:var(--navy);line-height:1.5}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.top h1{font-size:20px;margin:0;margin-right:auto}
+button,select{font:inherit}
+.b{border:0;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--navy);color:#fff}
+.b:hover{background:var(--orange)}
+.b.or{background:var(--orange)}.b.or:hover{background:var(--orange-d)}
+.b.gh{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+select{padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--navy)}
+.wrap{max-width:900px;margin:0 auto;padding:18px 16px 60px}
+.msg{padding:30px;text-align:center;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:grid;grid-template-columns:1fr auto;gap:6px 14px}
+.card.new{border-left:5px solid var(--orange)}
+.card h3{margin:0;font-size:17px}
+.card .meta{font-size:13px;color:var(--muted)}
+.card pre{grid-column:1/-1;margin:4px 0 0;font:inherit;font-size:14px;white-space:pre-wrap;background:var(--soft);border-radius:10px;padding:10px 12px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 9px;border-radius:99px;background:var(--orange);color:#fff;margin-left:6px}
+.tag.done{background:#2f9e6b}
+.tot{font-weight:700;font-size:17px;text-align:right}
+.login{max-width:360px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+.login input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;margin:10px 0 14px}
+.err{color:#c0392b;font-size:14px;min-height:20px}
+
+/* ===== PHIẾU IN ===== */
+#bill{display:none}
+.rc{font-family:"Courier New",ui-monospace,monospace;color:#000;font-size:12.5px;line-height:1.35;width:100%;padding:0 2mm;page-break-after:always;break-after:page}
+.rc:last-child{page-break-after:auto;break-after:auto}
+.rc h2{text-align:center;font-size:17px;margin:0}
+.rc .c{text-align:center}
+.rc hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.rc .big{font-size:15px;font-weight:700}
+.rc .l{display:flex;justify-content:space-between;gap:8px}
+.rc pre{font:inherit;white-space:pre-wrap;margin:2px 0}
+.rc .t{font-size:15px;font-weight:700}
+@page{size:80mm auto;margin:3mm}
+body.w58 .rc{font-size:11px}
+@media print{
+  body{background:#fff}
+  .top,.wrap,.login{display:none!important}
+  #bill{display:block}
+}
+</style>
+</head>
+<body>
+
+<script>
+/* ====== CẦN SỬA 1 DÒNG: dán địa chỉ Apps Script (đuôi /exec) vào đây ====== */
+var APPS_URL = "https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
+/* ===================================================================== */
+var SHOP = {ten:"THĂNG LONG 3D", dc:"Hà Nội", sdt:"0338 958 315 - 0906 120 335"};
+</script>
+
+<div class="login" id="login" hidden>
+  <h2 style="margin:0 0 4px">Đơn hàng Thăng Long 3D</h2>
+  <div style="color:var(--muted);font-size:14px">Nhập mật khẩu quản lý</div>
+  <input type="password" id="pw" autocomplete="current-password" placeholder="Mật khẩu">
+  <div class="err" id="lerr"></div>
+  <button class="b or" id="lgo" style="width:100%">Vào xem đơn</button>
+</div>
+
+<div id="app" hidden>
+  <div class="top">
+    <h1>Đơn hàng <span id="cnt" class="tag" hidden></span></h1>
+    <select id="flt" aria-label="Lọc đơn"><option value="new">Chỉ đơn mới</option><option value="all">Tất cả đơn</option></select>
+    <select id="wd" aria-label="Khổ giấy"><option value="80">Giấy 80 mm</option><option value="58">Giấy 58 mm</option></select>
+    <button class="b gh" id="rf">Làm mới</button>
+    <button class="b or" id="pall">In tất cả đơn mới</button>
+    <button class="b gh" id="lo">Đăng xuất</button>
+  </div>
+  <div class="wrap" id="list"><div class="msg">Đang tải...</div></div>
+</div>
+<div id="bill"></div>
+
+<script>
+var $=function(s){return document.querySelector(s)};
+var KEY="",ORD=[],known={};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}return null}
+
+async function load(first){
+  if(!APPS_URL){$("#list").innerHTML='<div class="msg">Chưa dán địa chỉ Apps Script vào dòng <b>APPS_URL</b> ở đầu file donhang.html.</div>';return false}
+  try{
+    var r=await fetch(APPS_URL+"?key="+encodeURIComponent(KEY)+"&t="+Date.now());
+    var j=await r.json();
+    if(!j.ok){if(first)return false;$("#list").innerHTML='<div class="msg">Sai mật khẩu hoặc chưa cho phép truy cập.</div>';return false}
+    var fresh=j.orders.filter(function(o){return o.status==="Mới"&&!known[o.id]});
+    if(!first&&fresh.length)beep();
+    j.orders.forEach(function(o){known[o.id]=1});
+    ORD=j.orders;render();return true;
+  }catch(e){
+    if(!first)$("#list").innerHTML='<div class="msg">Không kết nối được. Kiểm tra mạng rồi bấm "Làm mới".</div>';
+    return false
+  }
+}
+function render(){
+  var onlyNew=$("#flt").value==="new",nn=ORD.filter(function(o){return o.status==="Mới"}).length;
+  var c=$("#cnt");c.hidden=!nn;c.textContent=nn+" mới";document.title=(nn?"("+nn+") ":"")+"Đơn hàng – Thăng Long 3D";
+  var l=ORD.filter(function(o){return!onlyNew||o.status==="Mới"});
+  $("#list").innerHTML=l.length?l.map(function(o){
+    return '<div class="card'+(o.status==="Mới"?" new":"")+'"><div><h3>'+esc(o.ten)+' · '+esc(o.sdt)+'<span class="tag'+(o.status==="Mới"?"":" done")+'">'+esc(o.status)+'</span></h3><div class="meta">'+esc(o.id)+' · '+esc(o.time)+'</div></div><div class="tot">'+esc(o.tong?Number(o.tong).toLocaleString("vi-VN")+"đ":"")+'<br><button class="b or" data-p="'+esc(o.id)+'">In đơn</button></div><pre>'+esc(o.diachi+", "+o.xa+", "+o.tinh+"\n\n"+o.sanpham+(o.ghichu?"\n\nGhi chú: "+o.ghichu:"")+"\n\n"+o.thanhtoan)+'</pre></div>'
+  }).join(""):'<div class="msg">'+(onlyNew?"Chưa có đơn mới.":"Chưa có đơn nào.")+'</div>';
+}
+function money(v){return v?Number(v).toLocaleString("vi-VN")+"đ":""}
+function bill(o){
+  var ct=(o.chitiet||"").split("\n").filter(Boolean).map(function(x){return esc(x)}).join("\n");
+  return '<div class="rc"><h2>'+SHOP.ten+'</h2><div class="c">'+esc(SHOP.dc)+'<br>ĐT: '+esc(SHOP.sdt)+'</div><hr>'
+  +'<div class="c big">PHIẾU ĐƠN HÀNG</div><div class="l"><span>Mã:</span><b>'+esc(o.id)+'</b></div><div class="l"><span>Giờ:</span><span>'+esc(o.time)+'</span></div><hr>'
+  +'<b>Khách:</b> '+esc(o.ten)+'<br><b>SĐT:</b> '+esc(o.sdt)+'<br><b>Giao đến:</b><br>'+esc(o.diachi+", "+o.xa+", "+o.tinh)+'<br><b>Gói giao:</b> '+esc(o.giao)+'<hr>'
+  +'<b>SẢN PHẨM:</b><pre>'+esc(o.sanpham)+'</pre>'+(o.ghichu?'<b>Ghi chú:</b> '+esc(o.ghichu)+'<br>':'')+'<hr>'
+  +(ct?'<pre>'+ct+'</pre><hr>':'')
+  +'<div class="l t"><span>TỔNG:</span><span>'+esc(money(o.tong))+'</span></div><div class="c">'+esc(o.thanhtoan)+'</div><hr><div class="c">Cảm ơn quý khách!</div></div>'
+}
+function printList(l){
+  if(!l.length)return;
+  document.body.classList.toggle("w58",$("#wd").value==="58");
+  var st=document.getElementById("pgs")||document.head.appendChild(Object.assign(document.createElement("style"),{id:"pgs"}));
+  st.textContent="@page{size:"+$("#wd").value+"mm auto;margin:3mm}";
+  $("#bill").innerHTML=l.map(bill).join("");
+  setTimeout(function(){
+    window.print();
+    l.forEach(function(o){
+      if(o.status!=="Mới")return;
+      o.status="Đã in";
+      fetch(APPS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"mark",key:KEY,id:o.id})}).catch(function(){});
+    });
+    render();
+  },150);
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-p]");
+  if(b)printList(ORD.filter(function(o){return o.id===b.dataset.p}));
+});
+$("#pall").onclick=function(){printList(ORD.filter(function(o){return o.status==="Mới"}).reverse())};
+$("#flt").onchange=render;$("#rf").onclick=function(){load()};
+$("#wd").value=store("tl_wd")||"80";$("#wd").onchange=function(){store("tl_wd",this.value)};
+$("#lo").onclick=function(){store("tl_key",null);location.reload()};
+function beep(){try{var a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator();o.connect(a.destination);o.frequency.value=880;o.start();setTimeout(function(){o.stop()},350)}catch(e){}}
+async function enter(){
+  $("#lerr").textContent="";
+  if(await load(true)){store("tl_key",KEY);$("#login").hidden=true;$("#app").hidden=false;setInterval(function(){if(!document.hidden)load()},30000)}
+  else{$("#login").hidden=false;$("#app").hidden=true;if(KEY)$("#lerr").textContent=APPS_URL?"Sai mật khẩu hoặc không kết nối được.":""; if(!APPS_URL){$("#login").hidden=true;$("#app").hidden=false;load()}}
+}
+$("#lgo").onclick=function(){KEY=$("#pw").value.trim();enter()};
+$("#pw").addEventListener("keydown",function(e){if(e.key==="Enter")$("#lgo").click()});
+KEY=store("tl_key")||"";
+if(KEY)enter();else{$("#login").hidden=!APPS_URL;if(!APPS_URL){$("#app").hidden=false;load()}}
+</script>
+</body>
+</html>

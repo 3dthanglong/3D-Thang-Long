@@ -322,9 +322,6 @@ dialog::backdrop{background:rgba(5,12,28,.55)}
         <div class="sv"><h3>Thời gian in</h3><p>Sản phẩm được in sau khi đặt hàng. Thời gian in ước tính theo khối lượng sản phẩm, hiển thị ở từng trang sản phẩm và ở bước đặt hàng.</p></div>
         <div class="sv"><h3>Đổi trả trong 7 ngày</h3><p>Đổi trả trong vòng 7 ngày kể từ khi nhận hàng đối với lỗi từ phía xưởng (như lỗi in, giao sai sản phẩm). Bạn hãy liên hệ xưởng qua Zalo hoặc điện thoại.</p></div>
       </div>
-      <h3 class="sh">Bảng phí giao hàng tham khảo</h3>
-      <p class="sub">Gói tiêu chuẩn ViettelPost, gửi từ Hà Nội, đã tính theo khối lượng gửi.</p>
-      <div class="tw"><table class="ft" id="shiptable"></table></div>
     </div>
   </section>
 </main>
@@ -570,7 +567,7 @@ function renderShipTable(){
 }
 var SHOP_EMAIL="",SHOP_ZALO="https://zalo.me/0906120335";
 /* Dán địa chỉ Google Apps Script (đuôi /exec) vào đây để đơn tự động gửi về email và Google Sheet của bạn. Để trống thì khách sẽ sao chép nội dung gửi qua Zalo. */
-var ORDER_ENDPOINT="";
+var ORDER_ENDPOINT="https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
 var FORMS={
  quote:{title:"Nhận báo giá",btn:"Gửi yêu cầu báo giá",f:[
   ["ten","Họ và tên","text",1,0,"Nguyễn Văn A"],["sdt","Số điện thoại / Zalo","tel",1],["email","Email (không bắt buộc)","email",0],
