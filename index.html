@@ -234,6 +234,9 @@ dialog::backdrop{background:rgba(5,12,28,.55)}
 .ft{border-collapse:collapse;width:100%;min-width:520px;background:var(--card);font-size:15px}
 .ft th,.ft td{border:1px solid var(--line);padding:10px 14px;text-align:left}
 .ft th{background:var(--soft);font-weight:600}
+.fb .spec{margin:14px 0}
+.fb .spec dt{flex:0 0 40%}
+.fb .spec dd{white-space:pre-line;word-break:break-word}
 </style>
 </head>
 <body>
@@ -566,6 +569,8 @@ function renderShipTable(){
   }).join("")+"</tbody>"
 }
 var SHOP_EMAIL="",SHOP_ZALO="https://zalo.me/0906120335";
+/* Dán địa chỉ Google Apps Script (đuôi /exec) vào đây để đơn tự động gửi về email và Google Sheet của bạn. Để trống thì khách sẽ sao chép nội dung gửi qua Zalo. */
+var ORDER_ENDPOINT="";
 var FORMS={
  quote:{title:"Nhận báo giá",btn:"Gửi yêu cầu báo giá",f:[
   ["ten","Họ và tên","text",1,0,"Nguyễn Văn A"],["sdt","Số điện thoại / Zalo","tel",1],["email","Email (không bắt buộc)","email",0],
@@ -595,27 +600,55 @@ function fld(f){
 }
 function openForm(t){
   var F=FORMS[t];curForm=t;
-  dlg.innerHTML='<div class="fh"><h3>'+F.title+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><form class="fb" id="ff">'+F.f.map(fld).join("")+'<button class="btn" type="submit">'+F.btn+"</button></form>";
+  dlg.innerHTML='<div class="fh"><h3 id="ftitle">'+F.title+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><form class="fb" id="ff">'+F.f.map(fld).join("")+'<button class="btn" type="submit">'+F.btn+'</button></form><div class="fb" id="rv" hidden></div>';
   if(t==="order"){
     var ids=Object.keys(cart),tot=0,lines=ids.map(function(id){var p=products.filter(function(x){return x.id==id})[0];tot+=p.price*cart[id];return p.name+" x"+cart[id]+" ("+fmt(p.price*cart[id])+")"});
     if(ids.length)$("#f_sanpham").value=lines.join("\n")+"\nTạm tính: "+fmt(tot);
     $("#f_tinh").onchange=function(){loadWards(this.value);updShip()};$("#f_giao").onchange=updShip;updShip();
   }
   $("#fx").onclick=function(){dlg.close()};
-  $("#ff").onsubmit=function(e){e.preventDefault();if(t==="order"&&!$("#f_xa").value){toast("Vui lòng chọn hoặc nhập xã / phường");return}sendForm(e.target,t)};
+  $("#ff").onsubmit=function(e){e.preventDefault();if(t==="order"&&!$("#f_xa").value){toast("Vui lòng chọn hoặc nhập xã / phường");return}review(e.target,t)};
   if(!dlg.open)dlg.showModal();
 }
-async function sendForm(form,t){
+var pending=null;
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function buildText(t,d){
+  var F=FORMS[t];
+  return F.title+"\n"+F.f.filter(function(f){return f[2]!=="ship"}).map(function(f){return f[1]+": "+(d[f[0]]||"-")}).join("\n")+(t==="order"&&curShip?"\n"+curShip.text:"")
+}
+/* Bước kiểm tra: khách xem lại toàn bộ thông tin, sửa nếu cần rồi mới bấm gửi */
+function review(form,t){
   var F=FORMS[t],d={};new FormData(form).forEach(function(v,k){d[k]=v});
-  var text=F.title+"\n"+F.f.filter(function(f){return f[2]!=="ship"}).map(function(f){return f[1]+": "+(d[f[0]]||"-")}).join("\n")+(t==="order"&&curShip?"\n"+curShip.text:""),saved=false;
-  try{var db=window.claude&&await claude.use("db");if(db){await db.collection("requests").add({loai:F.title,thoigian:new Date().toISOString(),du_lieu:d});saved=true}}catch(x){}
-  if(saved&&t==="order"){cart={};renderCart()}
+  pending={t:t,d:d};
+  var rows=F.f.filter(function(f){return f[2]!=="ship"}).map(function(f){return"<div><dt>"+f[1]+"</dt><dd>"+esc(d[f[0]]||"-")+"</dd></div>"}).join("");
+  var ship="";
+  if(t==="order"&&curShip)ship='<div class="shipbox">'+curShip.text.split("\n").map(function(l){var i=l.indexOf(": ");return"<div><span>"+esc(l.slice(0,i))+"</span><b>"+esc(l.slice(i+2))+"</b></div>"}).join("")+"</div>";
+  $("#rv").innerHTML='<p class="ok">Hãy kiểm tra lại thông tin trước khi gửi.</p><dl class="spec">'+rows+"</dl>"+ship+'<div class="acts"><button class="btn ghost" type="button" id="rvback">Sửa thông tin</button><button class="btn" type="button" id="rvok">Xác nhận và gửi</button></div>';
+  $("#ftitle").textContent=t==="order"?"Kiểm tra đơn hàng":"Kiểm tra thông tin";
+  $("#ff").hidden=true;$("#rv").hidden=false;$("#rv").scrollTop=0;
+  $("#rvback").onclick=function(){$("#rv").hidden=true;$("#ff").hidden=false;$("#ftitle").textContent=F.title};
+  $("#rvok").onclick=function(){sendNow(this)}
+}
+async function sendNow(btn){
+  var P=pending,t=P.t,F=FORMS[t],text=buildText(t,P.d),sent=false;
+  btn.disabled=true;btn.textContent="Đang gửi...";
+  if(ORDER_ENDPOINT){
+    try{
+      await fetch(ORDER_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({loai:F.title,thoigian:new Date().toISOString(),du_lieu:P.d,tom_tat:text,tong:(t==="order"&&curShip)?curShip.total:""})});
+      sent=true
+    }catch(x){}
+  }
+  if(sent&&t==="order"){cart={};renderCart()}
   var a="";
-  if(SHOP_EMAIL)a+='<a class="btn" href="mailto:'+SHOP_EMAIL+"?subject="+encodeURIComponent(F.title)+"&body="+encodeURIComponent(text)+'">Gửi qua email</a>';
-  if(SHOP_ZALO)a+='<a class="btn" href="'+SHOP_ZALO+'" target="_blank" rel="noopener">Nhắn Zalo</a>';
-  dlg.innerHTML='<div class="fh"><h3>'+(saved?"Đã gửi thành công":"Gần xong rồi")+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><div class="fb"><p class="ok">'+(saved?"Xưởng đã nhận được thông tin và sẽ liên hệ lại với bạn sớm.":"Trang chưa gửi tự động được. Hãy sao chép nội dung dưới đây và gửi cho xưởng.")+'</p><textarea id="sum" rows="8" readonly></textarea><div class="acts"><button class="btn" type="button" id="cp">Sao chép nội dung</button>'+a+"</div></div>";
-  $("#sum").value=text;$("#fx").onclick=function(){dlg.close()};
-  $("#cp").onclick=function(){var el=$("#sum");try{navigator.clipboard.writeText(text).then(function(){toast("Đã sao chép")},function(){el.select();document.execCommand("copy");toast("Đã sao chép")})}catch(x){el.select();document.execCommand("copy");toast("Đã sao chép")}};
+  if(!sent&&SHOP_EMAIL)a+='<a class="btn" href="mailto:'+SHOP_EMAIL+"?subject="+encodeURIComponent(F.title)+"&body="+encodeURIComponent(text)+'">Gửi qua email</a>';
+  if(SHOP_ZALO)a+='<a class="btn'+(sent?" ghost":"")+'" href="'+SHOP_ZALO+'" target="_blank" rel="noopener">Nhắn Zalo</a>';
+  dlg.innerHTML='<div class="fh"><h3>'+(sent?"Đã gửi thành công":"Gần xong rồi")+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><div class="fb"><p class="ok">'+(sent?"Xưởng đã nhận được thông tin và sẽ liên hệ lại với bạn sớm. Bạn có thể nhắn thêm qua Zalo nếu cần gấp.":(ORDER_ENDPOINT?"Gửi tự động chưa được. ":"Trang chưa gửi tự động được. ")+"Hãy sao chép nội dung dưới đây và gửi cho xưởng.")+"</p>"+(sent?"":'<textarea id="sum" rows="8" readonly></textarea>')+'<div class="acts">'+(sent?"":'<button class="btn" type="button" id="cp">Sao chép nội dung</button>')+a+(sent?'<button class="btn ghost" type="button" id="done">Đóng</button>':"")+"</div></div>";
+  $("#fx").onclick=function(){dlg.close()};
+  if(sent){$("#done").onclick=function(){dlg.close()}}
+  else{
+    $("#sum").value=text;
+    $("#cp").onclick=function(){var el=$("#sum");try{navigator.clipboard.writeText(text).then(function(){toast("Đã sao chép")},function(){el.select();document.execCommand("copy");toast("Đã sao chép")})}catch(x){el.select();document.execCommand("copy");toast("Đã sao chép")}}
+  }
 }
 document.addEventListener("click",function(e){var l=e.target.closest("[data-form]");if(l){e.preventDefault();panel(false);openForm(l.dataset.form)}});
 dlg.addEventListener("click",function(e){if(e.target===dlg)dlg.close()});
