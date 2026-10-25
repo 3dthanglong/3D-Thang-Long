@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tạo file dữ liệu xã / phường</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 18px;line-height:1.6;color:#0F2347}
+button{background:#FF6A1F;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-size:16px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+pre{background:#F1F5FB;border-radius:10px;padding:14px;white-space:pre-wrap;min-height:60px}
+</style>
+</head>
+<body>
+<h1>Tạo file dữ liệu xã / phường</h1>
+<p>Bấm nút bên dưới. Trang sẽ lấy danh sách xã / phường của 34 tỉnh, thành sau sáp nhập từ dịch vụ provinces.open-api.vn, rồi tự tải về file <b>wards.json</b>.</p>
+<p>Sau đó tạo thư mục <b>data</b> cạnh file <b>index.html</b> và bỏ <b>wards.json</b> vào đó. Web sẽ dùng file này trước, không phụ thuộc dịch vụ bên ngoài nữa.</p>
+<button id="go">Tải dữ liệu</button>
+<pre id="log">Chưa bắt đầu.</pre>
+<script>
+var CODES=[1,4,8,11,12,14,15,19,20,22,24,25,31,33,37,38,40,42,44,46,48,51,52,56,66,68,75,79,80,82,86,91,92,96];
+var API="https://provinces.open-api.vn/api/v2";
+var log=document.getElementById("log"),btn=document.getElementById("go");
+function say(t){log.textContent+="\n"+t}
+function getJson(u){return fetch(u).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()})}
+function names(a){return(a||[]).map(function(w){return w&&w.name}).filter(Boolean)}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+async function one(code){
+  try{var d=await getJson(API+"/p/"+code+"?depth=2");var l=names(d.wards||d.communes);if(l.length)return l}catch(e){}
+  var d2=await getJson(API+"/w/?province="+code);
+  return names(Array.isArray(d2)?d2:d2.results||d2.items||d2.wards)
+}
+btn.onclick=async function(){
+  btn.disabled=true;log.textContent="Đang tải...";
+  var out={},bad=[],total=0;
+  for(var i=0;i<CODES.length;i++){
+    var c=CODES[i];
+    try{var l=await one(c);if(!l.length)throw new Error("rỗng");out[c]=l;total+=l.length;say("Tỉnh mã "+c+": "+l.length+" xã / phường")}
+    catch(e){bad.push(c);say("Tỉnh mã "+c+": LỖI ("+e.message+")")}
+    await wait(300)
+  }
+  say("Tổng cộng "+total+" xã / phường.");
+  if(bad.length)say("Chưa tải được các tỉnh mã: "+bad.join(", ")+". Hãy bấm lại hoặc gửi thông báo lỗi này cho người hỗ trợ.");
+  if(total){
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:"application/json"}));
+    a.download="wards.json";a.click();
+    say("Đã tải file wards.json về máy.")
+  }
+  btn.disabled=false
+};
+</script>
+</body>
+</html>
