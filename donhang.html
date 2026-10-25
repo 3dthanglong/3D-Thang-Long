@@ -157,7 +157,7 @@ button{cursor:pointer}
 
 <script>
 /* ====== CẦN SỬA 1 DÒNG: dán địa chỉ Apps Script (đuôi /exec) vào đây ====== */
-var APPS_URL = "https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
+var APPS_URL = "";
 /* ===================================================================== */
 var SHOP = {ten:"THĂNG LONG 3D", dc:"Hà Nội", sdt:"0338 958 315 - 0906 120 335"};
 </script>
@@ -293,10 +293,10 @@ function bill(o){
   +'<div class="bx"><h4>Người nhận</h4><div class="bd"><div class="kv"><span>Họ tên</span><b class="nm">'+esc(o.ten)+'</b><span>Điện thoại</span><b>'+esc(phone(o.sdt))+'</b><span>Địa chỉ</span><b>'+esc(addr)+'</b></div></div></div>'
   +'<div class="bx"><h4>Sản phẩm</h4><table class="tb"><thead><tr><th class="c">#</th><th>Tên sản phẩm</th><th class="c">SL</th><th class="r">Thành tiền</th></tr></thead><tbody>'+rows+'</tbody></table>'
   +(sub?'<div class="sm"><span>Tạm tính</span><b>'+esc(sub)+'</b></div>':'')
-  +ship.filter(function(x){return/^Phí giao/.test(x[0])}).map(function(x){return'<div class="sm"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>'}).join("")+'</div>'
-  +'<div class="gt"><span>'+(cod?"Tổng thu khi nhận hàng (COD)":"Tổng thanh toán")+'</span><b>'+esc(total)+'</b></div>'
+  +ship.filter(function(x){return/^(Phí giao|Giảm)/.test(x[0])}).map(function(x){return'<div class="sm"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>'}).join("")+'</div>'
+  +'<div class="gt"><span>'+(cod?"Tổng thu khi nhận hàng (COD)":"Tổng thanh toán (chuyển khoản)")+'</span><b>'+esc(total)+'</b></div>'
   +'<div class="pay">Hình thức thanh toán: <b>'+esc(o.thanhtoan||"-")+'</b>'+(o.giao?' · Gói giao: <b>'+esc(o.giao)+'</b>':'')+'</div>'
-  +(ship.filter(function(x){return!/^Phí giao/.test(x[0])}).length?'<div class="nt">'+ship.filter(function(x){return!/^Phí giao/.test(x[0])}).map(function(x){return esc(x[0])+': <b>'+esc(x[1])+'</b>'}).join("<br>")+'</div>':'')
+  +(ship.filter(function(x){return!/^(Phí giao|Giảm)/.test(x[0])}).length?'<div class="nt">'+ship.filter(function(x){return!/^(Phí giao|Giảm)/.test(x[0])}).map(function(x){return esc(x[0])+': <b>'+esc(x[1])+'</b>'}).join("<br>")+'</div>':'')
   +(o.ghichu?'<div class="nt"><b>Ghi chú của khách:</b> '+esc(o.ghichu)+'</div>':'')
   +'<div class="ft"><b>Cảm ơn quý khách đã tin tưởng Thăng Long 3D!</b><br>Đổi trả trong 7 ngày nếu lỗi từ xưởng · Liên hệ Zalo: '+esc(SHOP.sdt)+'</div></div>'
 }

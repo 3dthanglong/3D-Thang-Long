@@ -237,6 +237,24 @@ dialog::backdrop{background:rgba(5,12,28,.55)}
 .fb .spec{margin:14px 0}
 .fb .spec dt{flex:0 0 40%}
 .fb .spec dd{white-space:pre-line;word-break:break-word}
+.shipbox .dc{color:#1f9d6b;font-weight:600}
+.shipbox .dc span{color:#1f9d6b}
+.pnote{margin:6px 0 0;padding:8px 12px;background:#eaf8f1;border:1px solid #bfe8d4;border-radius:10px;color:#17694a;font-size:13.5px;line-height:1.5}
+.pay{text-align:center}
+.pay .amt{font-size:15px;color:var(--muted)}
+.pay .amt b{display:block;font-size:30px;color:var(--orange-d);line-height:1.2}
+.pay .qrw{width:min(280px,80%);margin:12px auto;padding:10px;background:#fff;border:2px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(15,35,71,.12)}
+.pay .qrw img{display:block;width:100%;height:auto;border-radius:8px}
+.pay .qrh{font-size:13px;color:var(--muted);margin:0 0 8px}
+.pay dl{margin:12px 0 0;text-align:left;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pay dl>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:14.5px}
+.pay dl>div:last-child{border-bottom:0}
+.pay dt{color:var(--muted);flex:none}
+.pay dd{margin:0;font-weight:700;text-align:right;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;word-break:break-all}
+.pay .cpb{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:3px 10px;font-size:12.5px;font-weight:700}
+.pay .cpb:hover{border-color:var(--orange);color:var(--orange-d)}
+.pay .nx{margin:12px 0 0;font-size:13.5px;color:var(--muted);text-align:left;line-height:1.55}
+.pay .acts{justify-content:center}
 </style>
 </head>
 <body>
@@ -516,9 +534,9 @@ function updShip(){
   var e=estShip(pv,ci.g,sv),pd=ci.miss?0:Math.max(1,Math.ceil(ci.mins/60/PRINT_HOURS_PER_DAY));
   var r1=ci.miss?"":pd+Math.ceil(e.d[0]),r2=ci.miss?"":pd+Math.ceil(e.d[1]);
   var recv=ci.miss?"Đang cập nhật":(r1===r2?"khoảng "+r1+" ngày":"khoảng "+r1+" đến "+r2+" ngày");
-  var pt=ci.miss?"Đang cập nhật":fmtMin(ci.mins),total=ci.tot+e.fee;
-  curShip={fee:e.fee,total:total,text:"Khối lượng gửi (gồm bao bì): "+ci.g+" g\nPhí giao hàng ViettelPost ("+SHIP[sv].name+"): "+fmt(e.fee)+"\nThời gian giao: "+fmtDays(e.d)+"\nThời gian in ước tính: "+pt+"\nDự kiến nhận hàng: "+recv+"\nTổng thanh toán (đã gồm phí giao): "+fmt(total)};
-  b.innerHTML='<div><span>Khối lượng gửi (gồm bao bì)</span><b>'+ci.g+' g</b></div><div><span>Phí giao hàng ViettelPost</span><b>'+fmt(e.fee)+'</b></div><div><span>Thời gian giao</span><b>'+fmtDays(e.d)+'</b></div><div><span>Thời gian in ước tính</span><b>'+pt+'</b></div><div><span>Dự kiến nhận hàng</span><b>'+recv+'</b></div><div class="tt"><span>Tổng thanh toán</span><b>'+fmt(total)+'</b></div><small>Phí và thời gian là ước tính theo bảng cước ViettelPost, đơn thật xưởng sẽ xác nhận lại.'+(ci.miss?' Một số sản phẩm chưa có khối lượng nên đang tạm tính '+DEFAULT_KL+' g mỗi sản phẩm.':'')+'</small>'
+  var pt=ci.miss?"Đang cập nhật":fmtMin(ci.mins),disc=isTransfer()?Math.round(ci.tot*PREPAY_OFF):0,total=ci.tot-disc+e.fee;
+  curShip={fee:e.fee,total:total,disc:disc,text:"Khối lượng gửi (gồm bao bì): "+ci.g+" g\nPhí giao hàng ViettelPost ("+SHIP[sv].name+"): "+fmt(e.fee)+"\nThời gian giao: "+fmtDays(e.d)+"\nThời gian in ước tính: "+pt+"\nDự kiến nhận hàng: "+recv+(disc?"\nGiảm "+Math.round(PREPAY_OFF*100)+"% khi chuyển khoản trước: -"+fmt(disc):"")+"\nTổng thanh toán (đã gồm phí giao): "+fmt(total)};
+  b.innerHTML='<div><span>Khối lượng gửi (gồm bao bì)</span><b>'+ci.g+' g</b></div><div><span>Phí giao hàng ViettelPost</span><b>'+fmt(e.fee)+'</b></div><div><span>Thời gian giao</span><b>'+fmtDays(e.d)+'</b></div><div><span>Thời gian in ước tính</span><b>'+pt+'</b></div><div><span>Dự kiến nhận hàng</span><b>'+recv+'</b></div>'+(disc?'<div class="dc"><span>Giảm '+Math.round(PREPAY_OFF*100)+'% khi chuyển khoản trước</span><b>-'+fmt(disc)+'</b></div>':'')+'<div class="tt"><span>Tổng thanh toán</span><b>'+fmt(total)+'</b></div><small>Phí và thời gian là ước tính theo bảng cước ViettelPost, đơn thật xưởng sẽ xác nhận lại.'+(ci.miss?' Một số sản phẩm chưa có khối lượng nên đang tạm tính '+DEFAULT_KL+' g mỗi sản phẩm.':'')+'</small>'
 }
 /* Danh sách xã/phường: ưu tiên file data/wards.json đặt cạnh index.html, nếu chưa có thì tải từ provinces.open-api.vn */
 var WARD_FILE="data/wards.json",WARD_API="https://provinces.open-api.vn/api/v2",WFILE=null;
@@ -566,8 +584,12 @@ function renderShipTable(){
   }).join("")+"</tbody>"
 }
 var SHOP_EMAIL="",SHOP_ZALO="https://zalo.me/0906120335";
+/* THANH TOÁN CHUYỂN KHOẢN: sửa thông tin ngân hàng ở đây. PREPAY_OFF là tỷ lệ giảm khi chuyển khoản trước (0.05 = 5%, tính trên tiền hàng, không tính phí giao). */
+var BANK={bin:"TPB",name:"TPBank",acc:"21122798888",accShow:"2112 2798 888",owner:"TRAN VAN DAI"};
+var PREPAY_OFF=0.05;
+function isTransfer(){var e=document.getElementById("f_thanhtoan");return!!e&&/Chuyển khoản/i.test(e.value)}
 /* Dán địa chỉ Google Apps Script (đuôi /exec) vào đây để đơn tự động gửi về email và Google Sheet của bạn. Để trống thì khách sẽ sao chép nội dung gửi qua Zalo. */
-var ORDER_ENDPOINT="https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
+var ORDER_ENDPOINT="";
 var FORMS={
  quote:{title:"Nhận báo giá",btn:"Gửi yêu cầu báo giá",f:[
   ["ten","Họ và tên","text",1,0,"Nguyễn Văn A"],["sdt","Số điện thoại / Zalo","tel",1],["email","Email (không bắt buộc)","email",0],
@@ -583,13 +605,14 @@ var FORMS={
   ["link","Link ảnh, bản vẽ hoặc file 3D tham khảo","url",0,0,"https://"]]},
  order:{title:"Thông tin đặt hàng",btn:"Gửi đơn đặt hàng",f:[
   ["ten","Họ và tên","text",1],["sdt","Số điện thoại","tel",1],["tinh","Tỉnh / Thành phố","prov",1],["xa","Xã / Phường","ward",1],["diachi","Địa chỉ cụ thể (số nhà, đường, thôn/xóm)","text",1,0,"Ví dụ: Số 6/5 Hậu Dưỡng"],["giao","Gói vận chuyển","select",0,["Tiêu chuẩn (ViettelPost)","Nhanh (ViettelPost)"]],["ship","","ship"],
-  ["sanpham","Sản phẩm đặt","area",1,0,"Ghi tên sản phẩm và số lượng"],["thanhtoan","Hình thức thanh toán","select",0,["Thanh toán khi nhận hàng (COD)","Chuyển khoản"]],["ghichu","Ghi chú","area",0]]}
+  ["sanpham","Sản phẩm đặt","area",1,0,"Ghi tên sản phẩm và số lượng"],["thanhtoan","Hình thức thanh toán","select",0,["Chuyển khoản trước (giảm 5%)","Thanh toán khi nhận hàng (COD)"]],["pn","Chuyển khoản trước được giảm 5% tiền hàng. Sau khi gửi đơn, trang hiện mã QR đã điền sẵn số tiền và nội dung, bạn chỉ cần quét bằng app ngân hàng.","note"],["ghichu","Ghi chú","area",0]]}
 };
 var dlg=$("#fm"),curForm="";
 function fld(f){
   var id="f_"+f[0],r=f[3]?" required":"",ph=f[5]?' placeholder="'+f[5]+'"':"",l='<label for="'+id+'">'+f[1]+(f[3]?" *":"")+"</label>";
   if(f[2]==="prov")return l+'<select id="'+id+'" name="'+f[0]+'" required><option value="">Chọn tỉnh / thành phố</option>'+PROVS.map(function(p){return"<option>"+p[0]+"</option>"}).join("")+"</select>";
   if(f[2]==="ward")return l+'<div id="wardbox"><select id="f_xa" name="xa" required disabled><option value="">Chọn tỉnh / thành phố trước</option></select></div>';
+  if(f[2]==="note")return'<p class="pnote">'+f[1]+"</p>";
   if(f[2]==="ship")return'<div class="shipbox" id="shipbox"></div>';
   if(f[2]==="area")return l+'<textarea id="'+id+'" name="'+f[0]+'" rows="3"'+r+ph+"></textarea>";
   if(f[2]==="select")return l+'<select id="'+id+'" name="'+f[0]+'">'+f[4].map(function(o){return"<option>"+o+"</option>"}).join("")+"</select>";
@@ -601,7 +624,7 @@ function openForm(t){
   if(t==="order"){
     var ids=Object.keys(cart),tot=0,lines=ids.map(function(id){var p=products.filter(function(x){return x.id==id})[0];tot+=p.price*cart[id];return p.name+" x"+cart[id]+" ("+fmt(p.price*cart[id])+")"});
     if(ids.length)$("#f_sanpham").value=lines.join("\n")+"\nTạm tính: "+fmt(tot);
-    $("#f_tinh").onchange=function(){loadWards(this.value);updShip()};$("#f_giao").onchange=updShip;updShip();
+    $("#f_tinh").onchange=function(){loadWards(this.value);updShip()};$("#f_giao").onchange=updShip;$("#f_thanhtoan").onchange=updShip;updShip();
   }
   $("#fx").onclick=function(){dlg.close()};
   $("#ff").onsubmit=function(e){e.preventDefault();if(t==="order"&&!$("#f_xa").value){toast("Vui lòng chọn hoặc nhập xã / phường");return}review(e.target,t)};
@@ -611,13 +634,13 @@ var pending=null;
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function buildText(t,d){
   var F=FORMS[t];
-  return F.title+"\n"+F.f.filter(function(f){return f[2]!=="ship"}).map(function(f){return f[1]+": "+(d[f[0]]||"-")}).join("\n")+(t==="order"&&curShip?"\n"+curShip.text:"")
+  return F.title+"\n"+(t==="order"&&pending&&pending.ma?"Mã đơn: "+pending.ma+"\n":"")+F.f.filter(function(f){return f[2]!=="ship"&&f[2]!=="note"}).map(function(f){return f[1]+": "+(d[f[0]]||"-")}).join("\n")+(t==="order"&&curShip?"\n"+curShip.text:"")
 }
 /* Bước kiểm tra: khách xem lại toàn bộ thông tin, sửa nếu cần rồi mới bấm gửi */
 function review(form,t){
   var F=FORMS[t],d={};new FormData(form).forEach(function(v,k){d[k]=v});
-  pending={t:t,d:d};
-  var rows=F.f.filter(function(f){return f[2]!=="ship"}).map(function(f){return"<div><dt>"+f[1]+"</dt><dd>"+esc(d[f[0]]||"-")+"</dd></div>"}).join("");
+  pending={t:t,d:d};if(t==="order"){var _n=new Date(),_p=function(x){return String(x).padStart(2,"0")},_r="",_c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";for(var _i=0;_i<4;_i++)_r+=_c.charAt(Math.floor(Math.random()*_c.length));pending.ma="TL"+String(_n.getFullYear()).slice(2)+_p(_n.getMonth()+1)+_p(_n.getDate())+_r}
+  var rows=F.f.filter(function(f){return f[2]!=="ship"&&f[2]!=="note"}).map(function(f){return"<div><dt>"+f[1]+"</dt><dd>"+esc(d[f[0]]||"-")+"</dd></div>"}).join("");
   var ship="";
   if(t==="order"&&curShip)ship='<div class="shipbox">'+curShip.text.split("\n").map(function(l){var i=l.indexOf(": ");return"<div><span>"+esc(l.slice(0,i))+"</span><b>"+esc(l.slice(i+2))+"</b></div>"}).join("")+"</div>";
   $("#rv").innerHTML='<p class="ok">Hãy kiểm tra lại thông tin trước khi gửi.</p><dl class="spec">'+rows+"</dl>"+ship+'<div class="acts"><button class="btn ghost" type="button" id="rvback">Sửa thông tin</button><button class="btn" type="button" id="rvok">Xác nhận và gửi</button></div>';
@@ -626,20 +649,44 @@ function review(form,t){
   $("#rvback").onclick=function(){$("#rv").hidden=true;$("#ff").hidden=false;$("#ftitle").textContent=F.title};
   $("#rvok").onclick=function(){sendNow(this)}
 }
+function qrUrl(ma,amt){return"https://img.vietqr.io/image/"+BANK.bin+"-"+BANK.acc+"-compact2.png?amount="+amt+"&addInfo="+encodeURIComponent(ma)+"&accountName="+encodeURIComponent(BANK.owner)}
+function payPanel(ma,amt){
+  var cp=function(v){return'<button class="cpb" type="button" data-copy="'+esc(v)+'">Sao chép</button>'};
+  return'<div class="pay"><div class="amt">Số tiền cần chuyển<b>'+fmt(amt)+'</b></div>'
+  +'<div class="qrw"><img src="'+qrUrl(ma,amt)+'" alt="Mã QR chuyển khoản '+fmt(amt)+'" onerror="this.parentNode.innerHTML=\'<p class=&quot;qrh&quot;>Chưa tải được mã QR. Bạn hãy chuyển khoản theo thông tin bên dưới.</p>\'"></div>'
+  +'<p class="qrh">Mở app ngân hàng, chọn quét mã QR. Số tiền và nội dung đã được điền sẵn.</p>'
+  +'<div class="acts"><button class="btn ghost" type="button" id="qrdl" data-ma="'+esc(ma)+'" data-amt="'+amt+'">Lưu ảnh mã QR</button></div>'
+  +'<dl><div><dt>Ngân hàng</dt><dd>'+BANK.name+'</dd></div><div><dt>Chủ tài khoản</dt><dd>'+BANK.owner+'</dd></div>'
+  +'<div><dt>Số tài khoản</dt><dd>'+BANK.accShow+cp(BANK.acc)+'</dd></div>'
+  +'<div><dt>Số tiền</dt><dd>'+fmt(amt)+cp(String(amt))+'</dd></div>'
+  +'<div><dt>Nội dung</dt><dd>'+esc(ma)+cp(ma)+'</dd></div></dl>'
+  +'<p class="nx">Vui lòng giữ nguyên <b>nội dung chuyển khoản</b> để xưởng đối soát nhanh. Chuyển xong, bạn có thể gửi ảnh biên lai qua Zalo. Xưởng sẽ xác nhận và bắt đầu in khi nhận được tiền.</p></div>'
+}
+document.addEventListener("click",function(e){
+  var c=e.target.closest("[data-copy]");
+  if(c){var v=c.dataset.copy;try{navigator.clipboard.writeText(v).then(function(){toast("Đã sao chép")},function(){toast("Không sao chép được")})}catch(x){toast("Không sao chép được")}return}
+  var d=e.target.closest("#qrdl");
+  if(d){
+    var u=qrUrl(d.dataset.ma,d.dataset.amt);
+    fetch(u).then(function(r){return r.blob()}).then(function(b){var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="QR-"+d.dataset.ma+".png";document.body.appendChild(a);a.click();a.remove();toast("Đã lưu ảnh mã QR")}).catch(function(){window.open(u,"_blank","noopener");toast("Nhấn giữ ảnh để lưu về máy")})
+  }
+});
 async function sendNow(btn){
   var P=pending,t=P.t,F=FORMS[t],text=buildText(t,P.d),sent=false;
   btn.disabled=true;btn.textContent="Đang gửi...";
   if(ORDER_ENDPOINT){
     try{
-      await fetch(ORDER_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({loai:F.title,thoigian:new Date().toISOString(),du_lieu:P.d,tom_tat:text,tong:(t==="order"&&curShip)?curShip.total:""})});
+      await fetch(ORDER_ENDPOINT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({ma:P.ma||"",loai:F.title,thoigian:new Date().toISOString(),du_lieu:P.d,tom_tat:text,tong:(t==="order"&&curShip)?curShip.total:""})});
       sent=true
     }catch(x){}
   }
+  var tr=(t==="order"&&/Chuyển khoản/i.test(P.d.thanhtoan||"")),amt=curShip?curShip.total:0,pay="";
+  if(tr&&amt)pay=payPanel(P.ma,amt);
   if(sent&&t==="order"){cart={};renderCart()}
   var a="";
   if(!sent&&SHOP_EMAIL)a+='<a class="btn" href="mailto:'+SHOP_EMAIL+"?subject="+encodeURIComponent(F.title)+"&body="+encodeURIComponent(text)+'">Gửi qua email</a>';
-  if(SHOP_ZALO)a+='<a class="btn'+(sent?" ghost":"")+'" href="'+SHOP_ZALO+'" target="_blank" rel="noopener">Nhắn Zalo</a>';
-  dlg.innerHTML='<div class="fh"><h3>'+(sent?"Đã gửi thành công":"Gần xong rồi")+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><div class="fb"><p class="ok">'+(sent?"Xưởng đã nhận được thông tin và sẽ liên hệ lại với bạn sớm. Bạn có thể nhắn thêm qua Zalo nếu cần gấp.":(ORDER_ENDPOINT?"Gửi tự động chưa được. ":"Trang chưa gửi tự động được. ")+"Hãy sao chép nội dung dưới đây và gửi cho xưởng.")+"</p>"+(sent?"":'<textarea id="sum" rows="8" readonly></textarea>')+'<div class="acts">'+(sent?"":'<button class="btn" type="button" id="cp">Sao chép nội dung</button>')+a+(sent?'<button class="btn ghost" type="button" id="done">Đóng</button>':"")+"</div></div>";
+  if(SHOP_ZALO)a+='<a class="btn'+(sent?" ghost":"")+'" href="'+SHOP_ZALO+'" target="_blank" rel="noopener">'+(tr?"Gửi biên lai qua Zalo":"Nhắn Zalo")+'</a>';
+  dlg.innerHTML='<div class="fh"><h3>'+(tr?"Thanh toán chuyển khoản":sent?"Đã gửi thành công":"Gần xong rồi")+'</h3><button class="x" type="button" id="fx" aria-label="Đóng">×</button></div><div class="fb">'+(sent&&tr?'<p class="ok" style="margin-top:14px"><b>Đơn của bạn đã được ghi nhận.</b> Hoàn tất bước chuyển khoản bên dưới để xưởng bắt đầu in.</p>':'')+pay+'<p class="ok">'+(sent?"Xưởng đã nhận được thông tin và sẽ liên hệ lại với bạn sớm. Bạn có thể nhắn thêm qua Zalo nếu cần gấp.":(ORDER_ENDPOINT?"Gửi tự động chưa được. ":"Trang chưa gửi tự động được. ")+"Hãy sao chép nội dung dưới đây và gửi cho xưởng.")+"</p>"+(sent?"":'<textarea id="sum" rows="8" readonly></textarea>')+'<div class="acts">'+(sent?"":'<button class="btn" type="button" id="cp">Sao chép nội dung</button>')+a+(sent?'<button class="btn ghost" type="button" id="done">Đóng</button>':"")+"</div></div>";
   $("#fx").onclick=function(){dlg.close()};
   if(sent){$("#done").onclick=function(){dlg.close()}}
   else{
