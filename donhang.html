@@ -168,11 +168,13 @@ button{cursor:pointer}
 .dh span{color:var(--muted);font-size:13.5px}
 .dh span b{color:var(--orange-d);font-size:14.5px}
 @media(max-width:720px){.bars{gap:3px}.bars small{font-size:9px}.bars em{font-size:9.5px}}
+.emb .hd{display:none}.emb .bar{top:0!important}
 </style>
 </head>
 <body>
 
 <script>
+if(/[?&]embed=1/.test(location.search))document.documentElement.className+=" emb";
 /* ====== CẦN SỬA 1 DÒNG: dán địa chỉ Apps Script (đuôi /exec) vào đây ====== */
 var APPS_URL = "https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
 /* ===================================================================== */
