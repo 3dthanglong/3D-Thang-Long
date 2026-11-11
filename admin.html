@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Quản lý sản phẩm – Thăng Long 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0F2347;--orange:#FF6A1F;--orange-d:#E5560F;--soft:#F1F5FB;--muted:#566581;--line:#DCE4F0;--ok:#16794C;--bad:#C62828}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 "Be Vietnam Pro",system-ui,sans-serif;color:var(--navy);background:var(--soft)}
+h1,h2{font-family:"Bricolage Grotesque",sans-serif;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:880px;margin:0 auto;padding:16px}
+.bar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+.bar .wrap{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.bar h1{font-size:20px;flex:1}.bar a{color:#fff;opacity:.8;font-size:13px}
+.btn{border:0;border-radius:10px;padding:10px 16px;background:var(--orange);color:#fff;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--orange-d)}.btn:disabled{opacity:.5;cursor:wait}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn.ghost:hover{background:var(--soft)}
+.btn.sm{padding:6px 10px;font-size:13px}.btn.red{background:#fff;color:var(--bad);border:1px solid #F1C5C5}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px}
+#login{max-width:360px;margin:12vh auto;padding:24px}
+#login h2{margin-bottom:12px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+label{display:block;font-weight:500;font-size:14px;margin:12px 0 4px}
+.tools{display:flex;gap:8px;margin:4px 0 12px}.tools input{flex:1}
+.row{display:flex;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}.row img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--soft);flex:none}
+.row .t{flex:1;min-width:0}.row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{color:var(--muted)}.row.off{opacity:.55}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--orange);color:#fff;margin-left:4px}.tag.g{background:var(--muted)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+dialog{width:min(640px,100%);max-height:94vh;border:0;border-radius:14px;padding:0;color:var(--navy)}
+dialog::backdrop{background:rgba(15,35,71,.55)}
+dialog form{padding:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;gap:18px;margin-top:12px}.chk label{display:flex;gap:8px;align-items:center;margin:0}.chk input{width:auto}
+.imgs{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
+.im{width:92px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.im img{display:block;width:92px;height:92px;object-fit:cover}
+.im div{display:flex}.im button{flex:1;border:0;border-top:1px solid var(--line);background:#fff;padding:4px 0;cursor:pointer}
+.im i{display:block;font-style:normal;font-size:11px;text-align:center;background:var(--navy);color:#fff}
+.foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+#msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:20}
+#msg.on{opacity:1}#msg.bad{background:var(--bad)}
+@media(max-width:520px){.g2{grid-template-columns:1fr}.row{flex-wrap:wrap}.acts{width:100%;justify-content:flex-start}}
+@media(prefers-reduced-motion:reduce){#msg{transition:none}}
+</style>
+</head>
+<body>
+<section id="login" class="card">
+  <h2>Quản lý sản phẩm</h2>
+  <p style="color:var(--muted);margin:0 0 4px">Nhập mật khẩu quản lý để tiếp tục.</p>
+  <label for="pw">Mật khẩu</label>
+  <input id="pw" type="password" autocomplete="current-password">
+  <p id="lerr" style="color:var(--bad);margin:8px 0 0" hidden></p>
+  <div class="foot"><button class="btn" id="go">Đăng nhập</button></div>
+</section>
+
+<div id="app" hidden>
+  <div class="bar"><div class="wrap"><h1>Sản phẩm Thăng Long 3D</h1><a href="index.html" target="_blank" rel="noopener">Xem trang web</a><button class="btn" id="add">Thêm sản phẩm</button></div></div>
+  <div class="wrap">
+    <div class="tools"><input id="q" type="search" placeholder="Tìm theo tên hoặc nhóm" aria-label="Tìm sản phẩm"></div>
+    <div class="card" id="list"></div>
+  </div>
+</div>
+
+<dialog id="dlg" aria-label="Sản phẩm"><form id="f" novalidate>
+  <h2 id="dt">Thêm sản phẩm</h2>
+  <label for="n">Tên sản phẩm</label><input id="n" maxlength="80">
+  <div class="g2">
+    <div><label for="c">Nhóm</label><select id="c"></select><input id="c2" placeholder="Tên nhóm mới" maxlength="40" hidden style="margin-top:6px"></div>
+    <div><label for="p">Giá (đồng)</label><input id="p" inputmode="numeric" placeholder="ví dụ 149000"></div>
+    <div><label for="m">Chất liệu</label><input id="m" maxlength="30"></div>
+    <div><label for="kl">Khối lượng (gram)</label><input id="kl" inputmode="numeric" placeholder="để tính phí giao và thời gian in"></div>
+  </div>
+  <label for="nt">Ghi chú ngắn (hiện dưới tên)</label><input id="nt" maxlength="90">
+  <label for="d">Mô tả</label><textarea id="d" rows="4" maxlength="800"></textarea>
+  <div class="g2"><div><label for="s">Số lượt đã bán (nếu muốn hiện)</label><input id="s" inputmode="numeric"></div></div>
+  <div class="chk"><label><input type="checkbox" id="h"> Đánh dấu Hot</label><label><input type="checkbox" id="v"> Hiện trên web</label></div>
+  <label>Ảnh (ảnh đầu tiên là ảnh đại diện)</label>
+  <div class="imgs" id="imgs"></div>
+  <input id="file" type="file" accept="image/*" multiple>
+  <div class="foot"><button type="button" class="btn ghost" id="cancel">Hủy</button><button type="submit" class="btn" id="save">Lưu sản phẩm</button></div>
+</form></dialog>
+<div id="msg" role="status"></div>
+
+<script>
+var EP="https://script.google.com/macros/s/AKfycbzPy89WXerHikyzJOMgc50pbQV6r29hpG2tyVkprvsO51AI8SPiRkuo8WmkW69mdMo_7A/exec";
+var BASE=["Đèn bàn","Đồ chơi","Phụ kiện","Gia dụng tiện ích"];
+var $=function(s){return document.querySelector(s)},K="",P=[],E=null,busy=0;
+try{K=sessionStorage.getItem("tlk")||""}catch(x){}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fold(x){return String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d")}
+function fmt(n){return Number(n).toLocaleString("vi-VN")+"đ"}
+var tm;function say(t,bad){var m=$("#msg");m.textContent=t;m.className="on"+(bad?" bad":"");clearTimeout(tm);tm=setTimeout(function(){m.className=""},3200)}
+function api(b){b.key=K;return fetch(EP,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){if(!d.ok)throw new Error(d.error||"Lỗi không rõ");return d})}
+function load(){return api({action:"sp_list"}).then(function(d){P=d.products;draw()})}
+function enter(){$("#login").hidden=true;$("#app").hidden=false}
+function login(){
+  K=$("#pw").value.trim();if(!K)return;$("#go").disabled=true;$("#lerr").hidden=true;
+  load().then(function(){try{sessionStorage.setItem("tlk",K)}catch(x){}enter()}).catch(function(e){K="";var l=$("#lerr");l.textContent=/mật khẩu/i.test(e.message)?"Sai mật khẩu.":"Không kết nối được máy chủ. Kiểm tra lại đã deploy Code.gs bản mới chưa. ("+e.message+")";l.hidden=false}).then(function(){$("#go").disabled=false})
+}
+$("#go").onclick=login;$("#pw").onkeydown=function(e){if(e.key==="Enter")login()};
+if(K){load().then(enter).catch(function(){K=""})}
+
+function draw(){
+  var q=fold($("#q").value),l=P.filter(function(p){return !q||fold(p.name+" "+p.cat).indexOf(q)>-1});
+  $("#list").innerHTML=l.length?l.map(function(p){return'<div class="row'+(p.show?"":" off")+'"><img src="'+esc(p.imgs[0]||"")+'" alt=""><div class="t"><b>'+esc(p.name)+(p.hot?'<span class="tag">Hot</span>':"")+(p.show?"":'<span class="tag g">Đang ẩn</span>')+'</b><small>'+esc(p.cat)+" | "+fmt(p.price)+" | SP"+p.id+'</small></div><div class="acts"><button class="btn ghost sm" data-e="'+p.id+'">Sửa</button><button class="btn ghost sm" data-t="'+p.id+'">'+(p.show?"Ẩn":"Hiện")+'</button><button class="btn red sm" data-x="'+p.id+'">Xóa</button></div></div>'}).join(""):'<div class="empty">'+(P.length?"Không có sản phẩm khớp.":"Chưa có sản phẩm. Bấm Thêm sản phẩm để bắt đầu.")+"</div>"
+}
+$("#q").oninput=draw;
+function find(id){return P.filter(function(p){return p.id==id})[0]}
+$("#list").onclick=function(e){
+  var b=e.target.closest("button");if(!b)return;
+  if(b.dataset.e)return edit(find(b.dataset.e));
+  if(b.dataset.t){var p=find(b.dataset.t),c=JSON.parse(JSON.stringify(p));c.show=!p.show;b.disabled=true;return api({action:"sp_save",product:c}).then(function(){say(c.show?"Đã hiện sản phẩm":"Đã ẩn sản phẩm");return load()}).catch(function(x){say(x.message,1);b.disabled=false})}
+  if(b.dataset.x){var d=find(b.dataset.x);if(!confirm("Xóa vĩnh viễn \""+d.name+"\"? Nếu chỉ muốn tạm dừng bán, hãy dùng nút Ẩn."))return;api({action:"sp_delete",id:d.id}).then(function(){say("Đã xóa");return load()}).catch(function(x){say(x.message,1)})}
+};
+$("#add").onclick=function(){edit(null)};
+
+function cats(cur){var s=BASE.slice();P.forEach(function(p){if(s.indexOf(p.cat)<0)s.push(p.cat)});if(cur&&s.indexOf(cur)<0)s.push(cur);return s}
+function edit(p){
+  E=p?JSON.parse(JSON.stringify(p)):{id:0,show:true,mat:"PLA",imgs:[],cat:""};
+  $("#dt").textContent=p?"Sửa sản phẩm":"Thêm sản phẩm";
+  $("#c").innerHTML=cats(E.cat).map(function(c){return'<option>'+esc(c)+'</option>'}).join("")+'<option value="__new">Nhóm mới...</option>';
+  $("#c").value=E.cat||BASE[0];$("#c2").hidden=true;$("#c2").value="";
+  $("#n").value=E.name||"";$("#p").value=E.price||"";$("#m").value=E.mat||"PLA";$("#kl").value=E.kl||"";$("#nt").value=E.note||"";$("#d").value=E.desc||"";$("#s").value=E.sold||"";$("#h").checked=!!E.hot;$("#v").checked=E.show!==false;
+  imgs();$("#dlg").showModal()
+}
+$("#c").onchange=function(){var n=this.value==="__new";$("#c2").hidden=!n;if(n)$("#c2").focus()};
+$("#cancel").onclick=function(){$("#dlg").close()};
+function imgs(){
+  $("#imgs").innerHTML=E.imgs.map(function(u,i){return'<div class="im">'+(i?"":"<i>Ảnh đại diện</i>")+'<img src="'+esc(u)+'" alt=""><div><button type="button" data-l="'+i+'" aria-label="Chuyển trái">&lt;</button><button type="button" data-r="'+i+'" aria-label="Chuyển phải">&gt;</button><button type="button" data-d="'+i+'" aria-label="Xóa ảnh">x</button></div></div>'}).join("")
+}
+$("#imgs").onclick=function(e){
+  var b=e.target.closest("button");if(!b)return;var a=E.imgs,i;
+  if(b.dataset.d!=null)a.splice(+b.dataset.d,1);
+  else if(b.dataset.l!=null&&(i=+b.dataset.l)>0){a.splice(i-1,2,a[i],a[i-1])}
+  else if(b.dataset.r!=null&&(i=+b.dataset.r)<a.length-1){a.splice(i,2,a[i+1],a[i])}
+  imgs()
+};
+function shrink(f){return new Promise(function(ok,no){
+  var im=new Image,u=URL.createObjectURL(f);
+  im.onerror=function(){no(new Error("Không đọc được ảnh "+f.name))};
+  im.onload=function(){
+    var s=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+    function rd(b){var r=new FileReader;r.onload=function(){ok({mime:b.type,data:r.result.split(",")[1]})};r.readAsDataURL(b)}
+    c.toBlob(function(b){if(b&&b.type==="image/webp")rd(b);else c.toBlob(function(j){j?rd(j):no(new Error("Không xử lý được ảnh"))},"image/jpeg",.88)},"image/webp",.85)
+  };im.src=u})}
+$("#file").onchange=function(){
+  var fs=[].slice.call(this.files);this.value="";if(!fs.length)return;
+  busy++;$("#save").disabled=true;var n=0,e=E;
+  fs.reduce(function(pr,f){return pr.then(function(){say("Đang tải ảnh "+(++n)+"/"+fs.length+"...");return shrink(f).then(function(x){return api({action:"sp_upload",mime:x.mime,data:x.data})}).then(function(d){e.imgs.push(d.url);if(e===E)imgs()})})},Promise.resolve())
+   .then(function(){say("Đã tải ảnh lên")}).catch(function(x){say(x.message,1)}).then(function(){if(!--busy)$("#save").disabled=false})
+};
+$("#f").onsubmit=function(ev){
+  ev.preventDefault();
+  var cat=$("#c").value==="__new"?$("#c2").value.trim():$("#c").value,name=$("#n").value.trim(),price=parseInt($("#p").value.replace(/\D/g,""),10);
+  if(!name)return say("Nhập tên sản phẩm",1);if(!cat)return say("Chọn hoặc nhập nhóm sản phẩm",1);
+  if(!price)return say("Nhập giá bán",1);if(!E.imgs.length)return say("Thêm ít nhất 1 ảnh",1);
+  var o={id:E.id,show:$("#v").checked,name:name,cat:cat,price:price,mat:$("#m").value.trim()||"PLA",kl:parseInt($("#kl").value.replace(/\D/g,""),10)||null,note:$("#nt").value.trim(),desc:$("#d").value.trim(),sold:parseInt($("#s").value.replace(/\D/g,""),10)||null,hot:$("#h").checked,imgs:E.imgs};
+  $("#save").disabled=true;
+  api({action:"sp_save",product:o}).then(function(){$("#dlg").close();say("Đã lưu, trang web đã cập nhật");return load()}).catch(function(x){say(x.message,1)}).then(function(){$("#save").disabled=false})
+};
+</script>
+</body>
+</html>

@@ -860,7 +860,16 @@ function route(){
   var el=h.length>1&&document.getElementById(h.slice(1));
   if(el)el.scrollIntoView()
 }
-products.forEach(function(p){if(p.imgs)p.img=p.imgs[0]});
+/* Sản phẩm thật được tải từ Google Sheet (tab SanPham, quản lý bằng admin.html). Mảng products ở trên chỉ là bản dự phòng khi chưa tải được. */
+var SP_BASE=["Đèn bàn","Đồ chơi","Phụ kiện","Gia dụng tiện ích"],SP_KEY="tl_sp",NOIMG="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#F1F5FB"/></svg>');
+function applyProducts(list){
+  products=list.map(function(p){p.img=(p.imgs&&p.imgs[0])||NOIMG;return p});
+  var ex=[];products.forEach(function(p){if(SP_BASE.indexOf(p.cat)<0&&ex.indexOf(p.cat)<0)ex.push(p.cat)});
+  cats=["Tất cả"].concat(SP_BASE,ex);if(cats.indexOf(cur)<0)cur="Tất cả";
+  Object.keys(cart).forEach(function(id){if(!products.some(function(x){return x.id==id}))delete cart[id]});
+}
+var spc=null;try{spc=JSON.parse(localStorage.getItem(SP_KEY)||"null")}catch(x){}
+applyProducts(spc&&spc.length?spc:products);
 renderShipTable();renderChips();renderGrid();renderCart();renderHot();route();addEventListener("hashchange",route);
 
 /* ===== Hai bên màn hình rộng ===== */
@@ -895,6 +904,15 @@ document.addEventListener("click",function(e){
 addEventListener("resize",renderRails);
 addEventListener("hashchange",renderRails);
 renderRails();
+
+/* ===== Tải sản phẩm mới nhất từ Google Sheet ===== */
+fetch(ORDER_ENDPOINT+"?action=products").then(function(r){return r.json()}).then(function(d){
+  if(!d||!d.ok||!d.products||!d.products.length)return;
+  var j=JSON.stringify(d.products);
+  try{if(localStorage.getItem(SP_KEY)===j)return;localStorage.setItem(SP_KEY,j)}catch(x){}
+  applyProducts(d.products);
+  renderChips();renderGrid();renderCart();renderHot();if(location.hash.indexOf("#sp-")===0)route()
+}).catch(function(){});
 
 /* ===== Tìm kiếm sản phẩm (thanh ở đầu trang) ===== */
 (function(){
